@@ -4,3 +4,10 @@
 
 # Module directory
 .terraform/
+
+*.zip
+node_modules
+
+# IDE
+.idea
+*.iml
