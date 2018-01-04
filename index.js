@@ -8,8 +8,8 @@ const headers = {
         "Strict-Transport-Security": "max-age=31536000; includeSubdomains; preload"
     },
     "html": {
-        // Content-Security-Policy-Report-Only: https://tesera.report-uri.com/r/d/csp/reportOnly
-        // Content-Security-Policy:             https://tesera.report-uri.com/r/d/csp/enforce
+        // Content-Security-Policy-Report-Only: https://willfarrell.report-uri.com/r/d/csp/reportOnly
+        // Content-Security-Policy:             https://willfarrell.report-uri.com/r/d/csp/enforce
         "Content-Security-Policy": "default-src 'none';" +
             " img-src 'self';" +
             " script-src 'self';" +
@@ -19,7 +19,7 @@ const headers = {
             " frame-ancestors 'none';" +
             " block-all-mixed-content;" +
             " upgrade-insecure-requests;" +
-            " report-uri https://tesera.report-uri.com/r/d/csp/reportOnly",
+            " report-uri https://willfarrell.report-uri.com/r/d/csp/reportOnly",
         "X-Frame-Options": "DENY",
         "X-XSS-Protection": "1; mode=block",
         "X-UA-Compatible":"ie=edge"
