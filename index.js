@@ -16,6 +16,7 @@ const headers = {
             " style-src 'self';" +
             " connect-src 'self';" +
             " base-uri 'none';" +
+            " form-action 'none';" +
             " frame-ancestors 'none';" +
             " block-all-mixed-content;" +
             " upgrade-insecure-requests;" +
