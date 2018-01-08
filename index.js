@@ -11,14 +11,21 @@ const headers = {
         // Content-Security-Policy-Report-Only: https://willfarrell.report-uri.com/r/d/csp/reportOnly
         // Content-Security-Policy:             https://willfarrell.report-uri.com/r/d/csp/enforce
         "Content-Security-Policy": "default-src 'none';" +
-            " img-src 'self';" +
-            " script-src 'self';" +
-            " style-src 'self';" +
-            " connect-src 'self';" +
+            //" connect-src 'none';" +  // default-src
+            //" font-src 'none'" + // default-src
+            //" frame-src 'none'" + // default-src
+            //" img-src 'none';" + // default-src
+            //" manifest-src 'none'" + // default-src
+            //" media-src 'none'" + // default-src
+            //" object-src 'none'" + // default-src
+            //" plugin-types <mime>" + // object-src 'none' to disable
+            //" script-src 'none';" + // default-src
+            //" style-src 'none';" + // default-src
+            //" worker-src 'none':" + // script-src
             " base-uri 'none';" +
+            " block-all-mixed-content;" +
             " form-action 'none';" +
             " frame-ancestors 'none';" +
-            " block-all-mixed-content;" +
             " upgrade-insecure-requests;" +
             " report-uri https://willfarrell.report-uri.com/r/d/csp/reportOnly",
         "X-Frame-Options": "DENY",
