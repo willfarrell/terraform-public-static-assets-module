@@ -27,6 +27,7 @@ const headers = {
             " form-action 'none';" +
             " frame-ancestors 'none';" +
             " upgrade-insecure-requests;" +
+            " require-sri-for script style;"
             " report-uri https://willfarrell.report-uri.com/r/d/csp/reportOnly",
         "X-Frame-Options": "DENY",
         "X-XSS-Protection": "1; mode=block",
