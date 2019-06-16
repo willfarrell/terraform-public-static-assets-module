@@ -1,23 +1,13 @@
-variable "env" {
-  type        = "string"
-  description = "Environment"
-}
-
-variable "aws_account_id" {
-  type        = "string"
-  description = "AWS Account ID"
-}
-
-variable "aws_region" {
-  type        = "string"
-  description = "AWS Region to deploy in"
-}
-
 // Suggested:
 // ${env}-${subdomain}-${domain}-${tld}
 variable "name" {
   type        = "string"
   description = "AWS S3 Bucket. {env}-{name}"
+}
+
+variable "default_tags" {
+  type    = "map"
+  default = {}
 }
 
 variable "aliases" {
@@ -27,6 +17,7 @@ variable "aliases" {
 
 variable "acm_certificate_arn" {
   "type" = "string"
+  default = ""
 }
 
 variable "web_acl_id" {
@@ -35,8 +26,45 @@ variable "web_acl_id" {
   description = "WAF ACL ID"
 }
 
-variable "lambda_edge_content" {
-  type        = "string"
-  default     = "null"
-  description = "function content to be used for edge lambda"
+# lambda@edge
+variable "lambda_viewer_request_default" {
+  default = false
+}
+
+variable "lambda_viewer_request" {
+  type    = "string"
+  default = ""
+}
+
+variable "lambda_origin_request_default" {
+  default = false
+}
+
+variable "lambda_origin_request" {
+  type    = "string"
+  default = ""
+}
+
+variable "lambda_viewer_response_default" {
+  default = false
+}
+
+variable "lambda_viewer_response" {
+  type    = "string"
+  default = ""
+}
+
+variable "lambda_origin_response_default" {
+  default = false
+}
+
+variable "lambda_origin_response" {
+  type    = "string"
+  default = ""
+}
+
+
+variable "logging_bucket" {
+  type = "string"
+  default = ""
 }

@@ -9,7 +9,7 @@ Creates CloudFront (w/ WAF and Lambda) and S3 Bucket.
 ```hcl-terraform
 provider "aws" {
     region  = "us-east-1"
-    profile = "redcross"
+    profile = "myapp"
     alias   = "edge"
 }
 
@@ -20,7 +20,7 @@ provider "aws" {
 ```hcl-terraform
 data "aws_acm_certificate" "main" {
   provider = "aws.edge"
-  domain   = "${var.env}-appname.tesera.com"
+  domain   = "${var.env}-appname.example.com"
   statuses = ["ISSUED"]
 }
 ```
@@ -29,43 +29,59 @@ data "aws_acm_certificate" "main" {
 
 ```hcl-terraform
 module "waf" {
-  source = "github.com/tesera/terraform-owasp-waf-module"
+  source = "git@github.com:tesera/terraform-modules//waf-owasp"
   name   = "${var.env}ApplicationName"
-  defaultAction = "${var.defaultAction}"
-
-  ipAdminListId = "${var.ipAdminListId}"
-  ipBlackListId = "${var.ipBlackListId}"
-  ipWhiteListId = "${var.ipWhiteListId}"
+  defaultAction = "ALLOW"
+  providers = {
+    aws = "aws.edge"
+  }
 }
 ```
 
 ### Module
 ```hcl-terraform
-module "app" {
-  source              = "github.com/tesera/terraform-s3-endpoint-module"
-  env                 = "${var.env}"
-  aws_account_id      = "${var.aws_account_id}"
-  aws_region          = "${var.aws_region}"
 
-  name                = "emis-registration-app"
-  aliases             = ["${var.env != "prod" ? "${var.env}-": ""}appname.tesera.com"]
+module "logs" {
+  source = "git@github.com:willfarrell/terraform-s3-logs-module?ref=v0.3.0"
+  name   = "${local.workspace["name"]}-${terraform.workspace}-edge"
+  tags   = {
+    "Name": "Edge Logs"
+  }
+}
+
+module "app" {
+  source              = "git@github.com:tesera/terraform-modules//public-static-assets?ref=v0.4.0"
+
+  name                = "${var.env}-myapp"
+  aliases             = ["${var.env != "prod" ? "${var.env}-": ""}appname.example.com"]
   acm_certificate_arn = "${data.aws_acm_certificate.main.arn}"
   web_acl_id          = "${module.waf.id}"
-  lambda_edge_content = "${replace(file("${path.module}/edge.js"), "{pkphash}", "${var.pkphash}")}"
+  lambda_origin_response = "${file("${path.module}/viewer-response.js")}"
+  logging_bucket         = "${local[terraform.workspace].name}-${terraform.workspace}-edge-logs"
+  
+  providers = {
+    aws = "aws.edge"
+  }
 }
 ```
 
 ## Input
-- **env:** Environment Name, typically `dev`,`uat`,`prod`.
-- **aws\_account\_id:** AWS Account ID
-- **aws_region:** AWS Region to deploy in
 - **name:** AWS S3 Bucket name. `${var.env}-${var.name}`.
 - **aliases:** CloudFront Aliases.
 - **acm_certificate_arn:** Domain Certificate ARN
 - **web_acl_id:** WAF ACL ID
-- **lambda_edge_content:** By default this module includes a lambda function to add security headers to all responses. This can be overwritten using the above example.
+- **lambda_viewer_request:** By default this module includes a lambda function to add security headers to all responses. This can be overwritten using the above example.
+- **lambda_origin_request:** By default this module passes the request through.
+- **lambda_viewer_response:** By default this module includes a lambda function to add index.html as the default sub directory object. This can be overwritten using the above example.
+- **lambda_origin_response:** By default this module passes the response through.
+- **lambda_\*_default:** Boolean to determine if the default lambda should be attached to the CloudFront [Default: false]
+- **logging_bucket:** Bucket id for where teh logs should be sent
 
 ## Output
-- **bucket_name:** `${aws_s3_bucket.main.id}` Full name of the S3 bucket.
-- **cloudfront_distribution_id:** `${aws_cloudfront_distribution.main.id}` CloudFront Distribution Id for CI/CD to trigger cache clearing (`aws cloudfront create-invalidation --distribution-id ${AWS_CLOUDFRONT_DISTRIBUTION_ID} --paths /index.html`)
-- **cloudfront_distribution_domain_name:** `${aws_cloudfront_distribution.main.domain_name}` CloudFront Domain Name for DNS updating.
+- **bucket:** `${aws_s3_bucket.main.id}` Full name of the S3 bucket.
+- **id:** `${aws_cloudfront_distribution.main.id}` CloudFront Distribution Id for CI/CD to trigger cache clearing (`aws cloudfront create-invalidation --distribution-id ${AWS_CLOUDFRONT_DISTRIBUTION_ID} --paths /index.html`)
+- **domain_name:** `${aws_cloudfront_distribution.main.domain_name}` CloudFront Domain Name for DNS updating.
+- **hosted_zone_id:** `${aws_cloudfront_distribution.main.hosted_zone_id}` CloudFront Hosted Zone ID.
+
+## TODO
+- add in price class var
