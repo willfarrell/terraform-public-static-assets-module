@@ -33,7 +33,7 @@ resource "aws_s3_bucket" "main" {
     {
       "Name"     = "${local.name} Static Assets"
       "Security" = "SSE:AWS"
-    },
+    }
   )
 }
 

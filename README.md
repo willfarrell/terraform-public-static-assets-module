@@ -50,7 +50,7 @@ module "logs" {
 }
 
 module "app" {
-  source              = "git@github.com:tesera/terraform-modules//public-static-assets?ref=v0.4.0"
+  source              = "git@github.com:willfarrell/terraform-public-static-assets?ref=v0.2.1"
 
   name                = "${var.env}-myapp"
   aliases             = ["${var.env != "prod" ? "${var.env}-": ""}appname.example.com"]
@@ -74,7 +74,6 @@ module "app" {
 - **lambda_origin_request:** By default this module passes the request through.
 - **lambda_viewer_response:** By default this module includes a lambda function to add index.html as the default sub directory object. This can be overwritten using the above example.
 - **lambda_origin_response:** By default this module passes the response through.
-- **lambda_\*_default:** Boolean to determine if the default lambda should be attached to the CloudFront [Default: false]
 - **logging_bucket:** Bucket id for where teh logs should be sent
 
 ## Output

@@ -60,26 +60,40 @@ resource "aws_cloudfront_distribution" "main" {
       }
     }
 
-    # TODO update when v0.12 released
-    #lambda_function_association {
-    #  event_type = "viewer-request"
-    #  lambda_arn = "${local.lambda_viewer_request_enabled ? aws_lambda_function.viewer_request.qualified_arn : ""}"
-    #}
+    dynamic "lambda_function_association" {
+      iterator = lambda_arn
+      for_each = var.lambda_viewer_request == "" ? [] : list(aws_lambda_function.viewer_request[0].qualified_arn)
+      content {
+        event_type = "viewer-request"
+        lambda_arn = lambda_arn.value
+      }
+    }
 
-    #lambda_function_association {
-    #  event_type = "origin-request"
-    #  lambda_arn = "${local.lambda_origin_request_enabled ? aws_lambda_function.origin_request.qualified_arn : ""}"
-    #}
+    dynamic "lambda_function_association" {
+      iterator = lambda_arn
+      for_each = var.lambda_origin_request == "" ? [] : list(aws_lambda_function.origin_request[0].qualified_arn)
+      content {
+        event_type = "origin-request"
+        lambda_arn = lambda_arn.value
+      }
+    }
 
-    #lambda_function_association {
-    #  event_type = "viewer-response"
-    #  lambda_arn = "${local.lambda_viewer_response_enabled ? aws_lambda_function.viewer_response.qualified_arn : ""}"
-    #}
+    dynamic "lambda_function_association" {
+      iterator = lambda_arn
+      for_each = var.lambda_origin_response == "" ? [] : list(aws_lambda_function.origin_response[0].qualified_arn)
+      content {
+        event_type = "origin-response"
+        lambda_arn = lambda_arn.value
+      }
+    }
 
-    // TODO - https://stackoverflow.com/questions/46262030/single-page-application-with-lambdaedge
-    lambda_function_association {
-      event_type = "origin-response"
-      lambda_arn = local.lambda_origin_response_enabled ? aws_lambda_function.origin_response.qualified_arn : ""
+    dynamic "lambda_function_association" {
+      iterator = lambda_arn
+      for_each = var.lambda_viewer_response == "" ? [] : list(aws_lambda_function.viewer_response[0].qualified_arn)
+      content {
+        event_type = "viewer-response"
+        lambda_arn = lambda_arn.value
+      }
     }
   }
 
