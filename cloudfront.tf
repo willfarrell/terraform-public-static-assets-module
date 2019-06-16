@@ -6,28 +6,28 @@ resource "aws_cloudfront_distribution" "main" {
   enabled         = true
   is_ipv6_enabled = true
   http_version    = "http2"
-  web_acl_id      = "${var.web_acl_id}"
+  web_acl_id      = var.web_acl_id
 
-  aliases = "${var.aliases}"
+  aliases = var.aliases
 
   viewer_certificate {
-    cloudfront_default_certificate = "${(var.acm_certificate_arn == "")}"
-    acm_certificate_arn            = "${var.acm_certificate_arn}"
+    cloudfront_default_certificate = var.acm_certificate_arn == ""
+    acm_certificate_arn            = var.acm_certificate_arn
     minimum_protocol_version       = "TLSv1.2_2018"
     ssl_support_method             = "sni-only"
   }
 
   origin {
-    origin_id   = "${local.name}"
-    domain_name = "${aws_s3_bucket.main.bucket_domain_name}"
+    origin_id   = local.name
+    domain_name = aws_s3_bucket.main.bucket_domain_name
 
     s3_origin_config {
-      origin_access_identity = "${aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path}"
+      origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
     }
   }
 
   default_cache_behavior {
-    target_origin_id = "${local.name}"
+    target_origin_id = local.name
 
     allowed_methods = [
       "GET",
@@ -79,7 +79,7 @@ resource "aws_cloudfront_distribution" "main" {
     // TODO - https://stackoverflow.com/questions/46262030/single-page-application-with-lambdaedge
     lambda_function_association {
       event_type = "origin-response"
-      lambda_arn = "${local.lambda_origin_response_enabled ? aws_lambda_function.origin_response.qualified_arn : ""}"
+      lambda_arn = local.lambda_origin_response_enabled ? aws_lambda_function.origin_response.qualified_arn : ""
     }
   }
 
@@ -104,7 +104,11 @@ resource "aws_cloudfront_distribution" "main" {
     prefix          = "AWSLogs/${local.account_id}/CloudFront/${var.aliases[0]}/"
   }
 
-  tags = "${merge(local.tags, map(
-    "Name", "${local.name} CloudFront"
-  ))}"
+  tags = merge(
+    local.tags,
+    {
+      "Name" = "${local.name} CloudFront"
+    },
+  )
 }
+
