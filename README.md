@@ -8,8 +8,8 @@ Creates CloudFront (w/ WAF and Lambda) and S3 Bucket.
 
 ```hcl-terraform
 provider "aws" {
+    profile = "${local.workspace["profile"]}-${local.workspace["env"]}"
     region  = "us-east-1"
-    profile = "myapp"
     alias   = "edge"
 }
 
@@ -29,8 +29,8 @@ data "aws_acm_certificate" "main" {
 
 ```hcl-terraform
 module "waf" {
-  source = "git@github.com:tesera/terraform-modules//waf-owasp"
-  name   = "${var.env}ApplicationName"
+  source = "git@github.com:willfarrell/terraform-waf-module"
+  name   = "${local.workspace["name"]}"
   defaultAction = "ALLOW"
   providers = {
     aws = "aws.edge"
