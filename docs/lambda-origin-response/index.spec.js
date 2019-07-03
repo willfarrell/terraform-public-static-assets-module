@@ -132,7 +132,7 @@ test('returns text/html headers', function (t) {
             'content-security-policy':[ 
                 { 
                     key: 'Content-Security-Policy',
-                    value: "default-src 'none'; img-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests; report-uri https://tesera.report-uri.com/r/d/csp/reportOnly"
+                    value: "default-src 'none'; img-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests; report-uri https://willfarrell.report-uri.com/r/d/csp/reportOnly"
                 } 
             ],
             'x-frame-options': [ 
