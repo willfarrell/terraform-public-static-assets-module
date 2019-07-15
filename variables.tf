@@ -47,6 +47,16 @@ variable "lambda_viewer_response" {
   default = ""
 }
 
+variable "lambda" {
+  type = map(string)
+  default = {}
+}
+
+variable "error_codes" {
+  type = map(string)
+  default = {}
+}
+
 variable "logging_bucket" {
   type    = string
   default = ""

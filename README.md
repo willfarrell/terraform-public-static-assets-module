@@ -54,9 +54,17 @@ module "app" {
 
   name                = "${var.env}-myapp"
   aliases             = ["${var.env != "prod" ? "${var.env}-": ""}appname.example.com"]
-  acm_certificate_arn = "${data.aws_acm_certificate.main.arn}"
-  web_acl_id          = "${module.waf.id}"
-  lambda_origin_response = "${file("${path.module}/viewer-response.js")}"
+  acm_certificate_arn = data.aws_acm_certificate.main.arn
+  web_acl_id          = module.waf.id
+  lambda = {
+    "origin-request" = file("${path.module}/origin-request.js")
+    "viewer-request" = file("${path.module}/viewer-request.js")
+    "viewer-response" = file("${path.module}/viewer-response.js")
+    "origin-response" = file("${path.module}/origin-response.js")
+  }
+  error_codes      = { 
+    404 = "/404.html"
+  }
   logging_bucket         = "${local[terraform.workspace].name}-${terraform.workspace}-edge-logs"
   
   providers = {
@@ -70,10 +78,8 @@ module "app" {
 - **aliases:** CloudFront Aliases.
 - **acm_certificate_arn:** Domain Certificate ARN
 - **web_acl_id:** WAF ACL ID
-- **lambda_viewer_request:** By default this module includes a lambda function to add security headers to all responses. This can be overwritten using the above example.
-- **lambda_origin_request:** By default this module passes the request through.
-- **lambda_viewer_response:** By default this module includes a lambda function to add index.html as the default sub directory object. This can be overwritten using the above example.
-- **lambda_origin_response:** By default this module passes the response through.
+- **lambda:** lambda@Edge functions
+- **error_codes:** map of paths for error codes. Defaults: none
 - **logging_bucket:** Bucket id for where teh logs should be sent
 
 ## Output
