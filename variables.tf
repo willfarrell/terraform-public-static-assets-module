@@ -26,27 +26,12 @@ variable "web_acl_id" {
   description = "WAF ACL ID"
 }
 
+variable "cors_origins" {
+  type = list(string)
+  default = ["*"]
+}
+
 # lambda@edge
-variable "lambda_viewer_request" {
-  type    = string
-  default = ""
-}
-
-variable "lambda_origin_request" {
-  type    = string
-  default = ""
-}
-
-variable "lambda_origin_response" {
-  type    = string
-  default = ""
-}
-
-variable "lambda_viewer_response" {
-  type    = string
-  default = ""
-}
-
 variable "lambda" {
   type = map(string)
   default = {}

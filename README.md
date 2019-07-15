@@ -79,6 +79,7 @@ module "app" {
 - **acm_certificate_arn:** Domain Certificate ARN
 - **web_acl_id:** WAF ACL ID
 - **lambda:** lambda@Edge functions
+- **cors_origins:** URL to apply to CORS. [Default: `["*"]`]
 - **error_codes:** map of paths for error codes. Defaults: none
 - **logging_bucket:** Bucket id for where teh logs should be sent
 
