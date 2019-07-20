@@ -82,43 +82,9 @@ resource "aws_cloudfront_distribution" "main" {
       for_each = keys(var.lambda)
       content {
         event_type = lambda_function_association.value
-        lambda_arn = aws_lambda_function.lambda[index(lambda_function_association.value,keys(var.lambda))].qualified_arn
+        lambda_arn = aws_lambda_function.lambda[lambda_function_association.key].qualified_arn
       }
     }
-
-    /*dynamic "lambda_function_association" {
-      for_each = var.lambda_viewer_request == "" ? [] : list(aws_lambda_function.viewer_request[0].qualified_arn)
-      content {
-        event_type = "viewer-request"
-        lambda_arn = lambda_function_association
-      }
-    }
-
-    dynamic "lambda_function_association" {
-      iterator = lambda_arn
-      for_each = var.lambda_origin_request == "" ? [] : list(aws_lambda_function.origin_request[0].qualified_arn)
-      content {
-        event_type = "origin-request"
-        lambda_arn = lambda_arn
-      }
-    }
-
-    dynamic "lambda_function_association" {
-      for_each = var.lambda_origin_response == "" ? [] : list(aws_lambda_function.origin_response[0].qualified_arn)
-      content {
-        event_type = "origin-response"
-        lambda_arn = lambda_arn
-      }
-    }
-
-    dynamic "lambda_function_association" {
-      iterator = lambda_arn
-      for_each = var.lambda_viewer_response == "" ? [] : list(aws_lambda_function.viewer_response[0].qualified_arn)
-      content {
-        event_type = "viewer-response"
-        lambda_arn = lambda_arn
-      }
-    }*/
   }
 
   /*ordered_cache_behavior {
@@ -189,7 +155,7 @@ resource "aws_cloudfront_distribution" "main" {
   tags = merge(
     local.tags,
     {
-      "Name" = "${local.name} CloudFront"
+      Name = "${local.name} CloudFront"
     }
   )
 }

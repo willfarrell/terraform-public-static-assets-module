@@ -27,18 +27,18 @@ variable "web_acl_id" {
 }
 
 variable "cors_origins" {
-  type = list(string)
+  type    = list(string)
   default = ["*"]
 }
 
 # lambda@edge
 variable "lambda" {
-  type = map(string)
+  type    = map(string)
   default = {}
 }
 
 variable "error_codes" {
-  type = map(string)
+  type    = map(string)
   default = {}
 }
 

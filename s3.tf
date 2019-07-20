@@ -39,8 +39,8 @@ resource "aws_s3_bucket" "main" {
   tags = merge(
     local.tags,
     {
-      "Name"     = "${local.name} Static Assets"
-      "Security" = "SSE:AWS"
+      Name     = "${local.name} Static Assets"
+      Security = "SSE:AWS"
     }
   )
 }
