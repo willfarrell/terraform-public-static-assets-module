@@ -1,4 +1,5 @@
 resource "aws_s3_bucket" "main" {
+  count = var.bucket_domain_name == "" ? 1 : 0
   bucket              = "${local.name}-${terraform.workspace}-static-assets"
   acl                 = "private"
   acceleration_status = "Enabled"
@@ -45,16 +46,43 @@ resource "aws_s3_bucket" "main" {
   )
 }
 
+resource "aws_s3_bucket_public_access_block" "main" {
+  count = var.bucket_domain_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 data "aws_iam_policy_document" "s3" {
+  count = var.bucket_domain_name == "" ? 1 : 0
   statement {
     actions = [
       "s3:ListBucket",
+    ]
+
+    resources = [
+      aws_s3_bucket.main[0].arn,
+    ]
+
+    principals {
+      type = "AWS"
+
+      identifiers = [
+        aws_cloudfront_origin_access_identity.main.iam_arn,
+      ]
+    }
+  }
+
+  statement {
+    actions = [
       "s3:GetObject",
     ]
 
     resources = [
-      aws_s3_bucket.main.arn,
-      "${aws_s3_bucket.main.arn}/*",
+      "${aws_s3_bucket.main[0].arn}/*",
     ]
 
     principals {
@@ -68,16 +96,10 @@ data "aws_iam_policy_document" "s3" {
 }
 
 resource "aws_s3_bucket_policy" "main" {
-  bucket = aws_s3_bucket.main.id
-  policy = data.aws_iam_policy_document.s3.json
+  count = var.bucket_domain_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
+  policy = data.aws_iam_policy_document.s3[0].json
 }
 
-resource "aws_s3_bucket_public_access_block" "main" {
-  bucket = aws_s3_bucket.main.id
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
 

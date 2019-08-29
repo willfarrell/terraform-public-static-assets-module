@@ -19,7 +19,7 @@ resource "aws_cloudfront_distribution" "main" {
 
   origin {
     origin_id   = "www"
-    domain_name = aws_s3_bucket.main.bucket_domain_name
+    domain_name = local.bucket_domain_name
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
@@ -76,6 +76,8 @@ resource "aws_cloudfront_distribution" "main" {
       cookies {
         forward = "none"
       }
+
+      headers = var.forward_headers
     }
 
     dynamic "lambda_function_association" {
@@ -135,7 +137,7 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
-  default_root_object = "index.html"
+  default_root_object = var.default_root_object
 
   dynamic "custom_error_response" {
     for_each = var.error_codes == "" ? {} : var.error_codes

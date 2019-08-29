@@ -28,7 +28,13 @@ variable "web_acl_id" {
 
 variable "cors_origins" {
   type    = list(string)
-  default = ["*"]
+  default = [
+    "*"]
+}
+
+variable "default_root_object" {
+  type    = string
+  default = "index.html"
 }
 
 # lambda@edge
@@ -42,8 +48,29 @@ variable "error_codes" {
   default = {}
 }
 
+variable "forward_headers" {
+  type = list(string)
+  default = [
+    "Authorization",
+    "Accept",
+    "Accept-Charset",
+    "Accept-Encoding",
+    "Accept-Language",
+    "Content-Length",
+    "Content-Type",
+    "Content-Encoding",
+    "Content-Language",
+    "Cache-Control",
+  ]
+}
+
 variable "logging_bucket" {
   type    = string
+  default = ""
+}
+
+// Override S3 bucket used
+variable "bucket_domain_name" {
   default = ""
 }
 
