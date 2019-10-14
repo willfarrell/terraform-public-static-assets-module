@@ -7,6 +7,7 @@ resource "aws_cloudfront_distribution" "main" {
   is_ipv6_enabled = true
   http_version    = "http2"
   web_acl_id      = var.web_acl_id
+  price_class     = var.price_class
 
   aliases = var.aliases
 
@@ -18,32 +19,14 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   origin {
-    origin_id   = "www"
     domain_name = local.bucket_domain_name
+    origin_id   = "www"
+    origin_path = var.origin_path
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
     }
   }
-
-  /*dynamic "origin" {
-    for_each = [var.api_id]
-    content {
-      domain_name = "${var.api_id}.execute-api.${var.api_region}.amazonaws.com"
-      oriigin_id = "api"
-      origin_path = "/${var.api_stage}"
-
-      custom_origin_config {
-        origin_protocol_policy = "https-only"
-
-        origin_ssl_protocols = [
-          "TLSv1.2",
-        ]
-
-        https_port = 443
-      }
-    }
-  }*/
 
   default_cache_behavior {
     target_origin_id = "www"
@@ -61,14 +44,13 @@ resource "aws_cloudfront_distribution" "main" {
     ]
 
     viewer_protocol_policy = "redirect-to-https"
+
+    compress = var.compress
     min_ttl                = 0
     default_ttl            = 86400
-
     # 1d
-    max_ttl = 31536000
-
+    max_ttl                = 31536000
     # 1y
-    compress = true
 
     forwarded_values {
       query_string = false
@@ -89,47 +71,65 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
-  /*ordered_cache_behavior {
-    target_origin_id = "api"
-    path_pattern     = "/${var.api_base_path}/*"
 
-    allowed_methods = [
-      "DELETE",
-      "GET",
-      "HEAD",
-      "OPTIONS",
-      "PATCH",
-      "POST",
-      "PUT",
-    ]
+  dynamic "origin" {
+    for_each = var.origins
+    content {
+      domain_name = origin.value.domain_name
+      origin_id   = origin.value.origin_id
+      origin_path = origin.value.origin_path
 
-    cached_methods = [
-      "GET",
-      "HEAD",
-    ]
+      custom_origin_config {
+        http_port              = 80
+        https_port             = 443
+        origin_protocol_policy = "https-only"
 
-    forwarded_values {
-      query_string = true
-
-      headers = [
-        "Accept",
-        "Authorization",
-        "Content-Type",
-        "Referer",
-      ]
-
-      cookies {
-        forward           = "none"
+        origin_ssl_protocols = [
+          "TLSv1.2",
+        ]
       }
     }
+  }
 
-    viewer_protocol_policy = "redirect-to-https"
+  dynamic "ordered_cache_behavior" {
+    for_each = var.origins
+    content {
+      target_origin_id = ordered_cache_behavior.value.origin_id
+      path_pattern     = "${ordered_cache_behavior.value.path_pattern}/*"
 
-    compress    = true
-    min_ttl     = 0
-    default_ttl = 0
-    max_ttl     = 0
-  }*/
+      allowed_methods = ordered_cache_behavior.value.allowed_methods
+      cached_methods = ordered_cache_behavior.value.cached_methods
+
+      viewer_protocol_policy = "redirect-to-https"
+      #trusted_signers = ordered_cache_behavior.value.trusted_signers  #  The AWS accounts, if any, that you want to allow to create signed URLs for private content.
+
+      compress    = var.compress
+      min_ttl     = 0
+      default_ttl = 86400
+      # 1d
+      max_ttl     = 31536000
+      # 1y
+
+      forwarded_values {
+        query_string = ordered_cache_behavior.value.query_string
+        query_string_cache_keys = ordered_cache_behavior.value.query_string_cache_keys
+
+        headers = ordered_cache_behavior.value.headers
+
+        cookies {
+          forward = "none"
+        }
+      }
+
+      /*dynamic "lambda_function_association" {
+        for_each = keys(ordered_cache_behavior.value.lambda)
+        content {
+          event_type = lambda_function_association.value
+          lambda_arn = aws_lambda_function.lambda[lambda_function_association.key].qualified_arn
+        }
+      }*/
+    }
+  }
 
   restrictions {
     geo_restriction {
@@ -155,10 +155,10 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   tags = merge(
-    local.tags,
-    {
-      Name = "${local.name} CloudFront"
-    }
+  local.tags,
+  {
+    Name = "${local.name} CloudFront"
+  }
   )
 }
 

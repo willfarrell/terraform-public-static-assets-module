@@ -8,7 +8,11 @@ resource "aws_s3_bucket" "main" {
     allowed_headers = ["*"]
     allowed_methods = ["GET"]
     allowed_origins = var.cors_origins
-    expose_headers  = ["ETag"]
+    expose_headers  = [
+      "ETag",
+      "Cache-Conrol",
+      "Content-Type"
+    ]
     max_age_seconds = 3000
   }
 
@@ -56,7 +60,7 @@ resource "aws_s3_bucket_public_access_block" "main" {
   restrict_public_buckets = true
 }
 
-data "aws_iam_policy_document" "s3" {
+/*data "aws_iam_policy_document" "s3" {
   count = var.bucket_domain_name == "" ? 1 : 0
   statement {
     actions = [
@@ -93,13 +97,36 @@ data "aws_iam_policy_document" "s3" {
       ]
     }
   }
-}
+}*/
 
 resource "aws_s3_bucket_policy" "main" {
   count = var.bucket_domain_name == "" ? 1 : 0
   bucket = aws_s3_bucket.main[0].id
-  policy = data.aws_iam_policy_document.s3[0].json
+  policy = <<POLICY
+{
+    "Version": "2012-10-17",
+    "Id": "${aws_s3_bucket.main[0].id}-policy",
+    "Statement": [
+    {
+      "Action": "s3:ListBucket",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "${aws_cloudfront_origin_access_identity.main.iam_arn}"
+      },
+      "Resource": "${aws_s3_bucket.main[0].arn}",
+      "Sid": ""
+    },
+    {
+      "Action": "s3:GetObject",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "${aws_cloudfront_origin_access_identity.main.iam_arn}"
+      },
+      "Resource": "${aws_s3_bucket.main[0].arn}/*",
+      "Sid": ""
+    }
+  ]
 }
-
-
+POLICY
+}
 

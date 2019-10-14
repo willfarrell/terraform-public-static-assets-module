@@ -10,6 +10,11 @@ variable "default_tags" {
   default = {}
 }
 
+variable "price_class" {
+  type = string
+  default = "PriceClass_All" # PriceClass_All, PriceClass_200, PriceClass_100
+}
+
 variable "aliases" {
   type        = list(string)
   description = "Cloudfront Aliases"
@@ -30,6 +35,22 @@ variable "cors_origins" {
   type    = list(string)
   default = [
     "*"]
+}
+
+variable "origin_path" {
+  type = string
+  default = "/"
+}
+
+variable "origins" {
+  type = list(any)
+  default = []
+}
+
+// brotoli is not supported, set to false if doing self compression
+variable "compress" {
+  type = bool
+  default = true
 }
 
 variable "default_root_object" {
