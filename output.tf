@@ -1,5 +1,5 @@
 output "bucket" {
-  value = aws_s3_bucket.main[0].id
+  value = var.bucket_domain_name == "" ? aws_s3_bucket.main[0].id : var.bucket_domain_name
 }
 
 output "id" {
