@@ -49,7 +49,7 @@ resource "aws_lambda_function" "lambda" {
   source_code_hash = filebase64sha256(data.archive_file.lambda[count.index].output_path)
   role             = aws_iam_role.lambda[count.index].arn
   handler          = "index.handler"
-  runtime          = "nodejs10.x"
+  runtime          = "nodejs10.x" # nodejs12.x not supported on Edge yet
   memory_size      = 128
   timeout          = 1
   publish          = true

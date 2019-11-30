@@ -103,18 +103,18 @@ resource "aws_cloudfront_distribution" "main" {
       viewer_protocol_policy = "redirect-to-https"
       #trusted_signers = ordered_cache_behavior.value.trusted_signers  #  The AWS accounts, if any, that you want to allow to create signed URLs for private content.
 
-      compress    = var.compress
+      compress    = ordered_cache_behavior.value.compress // false
       min_ttl     = 0
-      default_ttl = 86400
+      default_ttl = ordered_cache_behavior.value.default_ttl
       # 1d
       max_ttl     = 31536000
       # 1y
 
       forwarded_values {
-        query_string = ordered_cache_behavior.value.query_string
-        query_string_cache_keys = ordered_cache_behavior.value.query_string_cache_keys
+        query_string = ordered_cache_behavior.value.query_string  // false
+        query_string_cache_keys = ordered_cache_behavior.value.query_string_cache_keys  // null
 
-        headers = ordered_cache_behavior.value.headers
+        headers = ordered_cache_behavior.value.headers  // []
 
         cookies {
           forward = "none"
