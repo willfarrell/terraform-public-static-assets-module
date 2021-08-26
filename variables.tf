@@ -64,6 +64,7 @@ variable "lambda" {
   default = {}
 }
 
+// Allowed: 400, 403, 404, 405, 414, 416, 500, 501, 502, 503, 504
 variable "error_codes" {
   type    = map(string)
   default = {}
@@ -72,16 +73,16 @@ variable "error_codes" {
 variable "forward_headers" {
   type = list(string)
   default = [
-    "Authorization",
     "Accept",
     "Accept-Charset",
     "Accept-Encoding",
     "Accept-Language",
-    "Content-Length",
-    "Content-Type",
+    "Authorization",
+    "Cache-Control",
     "Content-Encoding",
     "Content-Language",
-    "Cache-Control",
+    "Content-Length",
+    "Content-Type",
   ]
 }
 
@@ -94,4 +95,5 @@ variable "logging_bucket" {
 variable "bucket_domain_name" {
   default = ""
 }
+
 

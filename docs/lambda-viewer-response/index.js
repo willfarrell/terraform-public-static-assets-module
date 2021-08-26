@@ -15,6 +15,7 @@ const headers = {
     },
     'html': {
         'Report-To':
+            `{ "group": "default", "max_age": 31536000, "endpoints": [ { "url": "https://${reportDomain}.report-uri.com/a/d/g" } ], "include_subdomains": true },` +
             `{ "group": "csp", "max-age": 10886400,  "endpoints": [ { "url": "https://${reportDomain}.report-uri.com/r/d/csp/${reportMethod}" } ] },` +
             `{ "group": "hpkp", "max-age": 10886400,  "endpoints": [ { "url": "https://${reportDomain}.report-uri.com/r/d/hpkp/${reportMethod}" } ] },` +
             `{ "group": "ct", "max-age": 10886400,  "endpoints": [ { "url": "https://${reportDomain}.report-uri.com/r/d/ct/${reportMethod}" } ] },` +
@@ -74,6 +75,7 @@ const headers = {
             //`wake-lock 'none';`+
             //`webauthn 'self';`+
             `vr 'none';`,
+        'NEL':`{"report_to":"default","max_age":31536000,"include_subdomains":true}`,
         //'X-Frame-Options': 'DENY',    // DEPRECATED: `frame-ancestors 'none'`
         //'X-XSS-Protection': '1; mode=block', // DEPRECATED
         //'X-UA-Compatible': 'ie=edge',

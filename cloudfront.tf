@@ -14,7 +14,7 @@ resource "aws_cloudfront_distribution" "main" {
   viewer_certificate {
     cloudfront_default_certificate = var.acm_certificate_arn == ""
     acm_certificate_arn            = var.acm_certificate_arn
-    minimum_protocol_version       = "TLSv1.2_2018"
+    minimum_protocol_version       = "TLSv1.2_2021"
     ssl_support_method             = "sni-only"
   }
 
@@ -95,26 +95,24 @@ resource "aws_cloudfront_distribution" "main" {
     for_each = var.origins
     content {
       target_origin_id = ordered_cache_behavior.value.origin_id
-      path_pattern     = "${ordered_cache_behavior.value.path_pattern}/*"
+      path_pattern     = ordered_cache_behavior.value.path_pattern
 
-      allowed_methods = ordered_cache_behavior.value.allowed_methods
-      cached_methods = ordered_cache_behavior.value.cached_methods
+      allowed_methods = try(ordered_cache_behavior.value.allowed_methods, [])
+      cached_methods = try(ordered_cache_behavior.value.cached_methods, [])
 
       viewer_protocol_policy = "redirect-to-https"
       #trusted_signers = ordered_cache_behavior.value.trusted_signers  #  The AWS accounts, if any, that you want to allow to create signed URLs for private content.
 
-      compress    = ordered_cache_behavior.value.compress // false
-      min_ttl     = 0
-      default_ttl = ordered_cache_behavior.value.default_ttl
-      # 1d
-      max_ttl     = 31536000
-      # 1y
+      compress    = can(ordered_cache_behavior.value.compress) ? ordered_cache_behavior.value.compress : false//try(ordered_cache_behavior.value.compress, false)
+      min_ttl     = try(ordered_cache_behavior.value.min_ttl, 0)
+      default_ttl = try(ordered_cache_behavior.value.default_ttl, 86400)
+      max_ttl     = try(ordered_cache_behavior.value.max_ttl, 31536000)
 
       forwarded_values {
-        query_string = ordered_cache_behavior.value.query_string  // false
-        query_string_cache_keys = ordered_cache_behavior.value.query_string_cache_keys  // null
+        query_string = try(ordered_cache_behavior.value.query_string, false)
+        query_string_cache_keys = try(ordered_cache_behavior.value.query_string_cache_keys, [])
 
-        headers = ordered_cache_behavior.value.headers  // []
+        headers = try(ordered_cache_behavior.value.headers, [])
 
         cookies {
           forward = "none"

@@ -10,22 +10,22 @@ resource "aws_s3_bucket" "main" {
     allowed_origins = var.cors_origins
     expose_headers  = [
       "ETag",
-      "Cache-Conrol",
+      "Cache-Control",
       "Content-Type"
     ]
     max_age_seconds = 3000
   }
 
-  versioning {
-    enabled = false
-  }
+  #versioning {
+  #  enabled = false
+  #}
 
   logging {
     target_bucket = local.logging_bucket
     target_prefix = "AWSLogs/${local.account_id}/S3/${local.name}-${terraform.workspace}-static-assets/"
   }
 
-  // CloudFront unable to reach `aws:kms` - not supported yet (2018-07-10)
+  // Requires origin-request (https://aws.amazon.com/blogs/networking-and-content-delivery/serving-sse-kms-encrypted-content-from-s3-using-cloudfront/)
   //  server_side_encryption_configuration {
   //    rule {
   //      apply_server_side_encryption_by_default {
@@ -113,7 +113,9 @@ resource "aws_s3_bucket_policy" "main" {
       "Principal": {
         "AWS": "${aws_cloudfront_origin_access_identity.main.iam_arn}"
       },
-      "Resource": "${aws_s3_bucket.main[0].arn}",
+      "Resource": [
+        "${aws_s3_bucket.main[0].arn}"
+      ],
       "Sid": ""
     },
     {
