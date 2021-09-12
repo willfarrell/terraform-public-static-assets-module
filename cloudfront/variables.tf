@@ -96,4 +96,11 @@ variable "bucket_domain_name" {
   default = ""
 }
 
+variable "dead_letter_arn" {
+  type = string
+}
+
+variable "dead_letter_policy_arn" {
+  type = string
+}
 
