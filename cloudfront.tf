@@ -18,6 +18,20 @@ resource "aws_cloudfront_distribution" "main" {
     ssl_support_method             = "sni-only"
   }
 
+  /*origin_group {
+    origin_id = "group"
+    failover_criteria {
+      status_codes = [500]
+    }
+    member {
+      origin_id = "www"
+    }
+
+    member {
+      origin_id = "fallback"
+    }
+  }*/
+
   origin {
     domain_name = local.bucket_domain_name
     origin_id   = "www"
@@ -27,6 +41,16 @@ resource "aws_cloudfront_distribution" "main" {
       origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
     }
   }
+
+  /*origin {
+    domain_name = local.bucket_domain_name
+    origin_id   = "fallback"
+    origin_path = var.fallback_path
+
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
+    }
+  }*/
 
   default_cache_behavior {
     target_origin_id = "www"
@@ -45,12 +69,10 @@ resource "aws_cloudfront_distribution" "main" {
 
     viewer_protocol_policy = "redirect-to-https"
 
-    compress = var.compress
+    compress               = var.compress
     min_ttl                = 0
     default_ttl            = 86400
-    # 1d
     max_ttl                = 31536000
-    # 1y
 
     forwarded_values {
       query_string = false
@@ -62,13 +84,34 @@ resource "aws_cloudfront_distribution" "main" {
       headers = var.forward_headers
     }
 
+//    dynamic "lambda_function_association" {
+//      for_each = can(var.lambda["viewer-request"]) ? [1] : []
+//      content {
+//        event_type = "viewer-request"
+//        lambda_arn = module.lambda-viewer-request[0].qualified_arn
+//      }
+//    }
     dynamic "lambda_function_association" {
-      for_each = keys(var.lambda)
+      for_each = can(var.lambda["origin-request"]) ? [1] : []
       content {
-        event_type = lambda_function_association.value
-        lambda_arn = aws_lambda_function.lambda[lambda_function_association.key].qualified_arn
+        event_type = "origin-request"
+        lambda_arn = module.lambda-origin-request[0].qualified_arn
       }
     }
+    dynamic "lambda_function_association" {
+      for_each = can(var.lambda["origin-response"]) ? [1] : []
+      content {
+        event_type = "origin-response"
+        lambda_arn = module.lambda-origin-response[0].qualified_arn
+      }
+    }
+//    dynamic "lambda_function_association" {
+//      for_each = can(var.lambda["viewer-response"]) ? [1] : []
+//      content {
+//        event_type = "viewer-response"
+//        lambda_arn = module.lambda-viewer-response[0].qualified_arn
+//      }
+//    }
   }
 
 
@@ -138,10 +181,10 @@ resource "aws_cloudfront_distribution" "main" {
   default_root_object = var.default_root_object
 
   dynamic "custom_error_response" {
-    for_each = var.error_codes == "" ? {} : var.error_codes
+    for_each = var.error_codes
     content {
       error_code         = custom_error_response.key
-      response_code      = 200
+      response_code      = custom_error_response.key
       response_page_path = custom_error_response.value
     }
   }
