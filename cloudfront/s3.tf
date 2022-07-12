@@ -36,7 +36,7 @@ resource "aws_s3_bucket_cors_configuration" "main" {
   }
 }
 
-resource "aws_s3_bucket_logging resource" "main" {
+resource "aws_s3_bucket_logging" "main" {
   bucket = aws_s3_bucket.main.id
   target_bucket = local.logging_bucket
   target_prefix = "AWSLogs/${local.account_id}/S3/${local.name}-${terraform.workspace}-static-assets/"
