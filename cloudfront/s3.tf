@@ -12,17 +12,20 @@ resource "aws_s3_bucket" "main" {
 }
 
 resource "aws_s3_bucket_acl" "main" {
-  bucket = aws_s3_bucket.main.id
+  count = var.bucket_domain_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
   acl    = "private"
 }
 
 resource "aws_s3_bucket_accelerate_configuration" "main" {
-  bucket = aws_s3_bucket.main.id
+  count = var.bucket_domain_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
   status = "Enabled"
 }
 
 resource "aws_s3_bucket_cors_configuration" "main" {
-  bucket = aws_s3_bucket.main.id
+  count = var.bucket_domain_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET"]
@@ -37,20 +40,23 @@ resource "aws_s3_bucket_cors_configuration" "main" {
 }
 
 resource "aws_s3_bucket_logging" "main" {
-  bucket = aws_s3_bucket.main.id
+  count = var.bucket_domain_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
   target_bucket = local.logging_bucket
   target_prefix = "AWSLogs/${local.account_id}/S3/${local.name}-${terraform.workspace}-static-assets/"
 }
 
 resource "aws_s3_bucket_versioning" "main" {
-  bucket = aws_s3_bucket.main.id
+  count = var.bucket_domain_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
   versioning_configuration {
     status = "Disabled"
   }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "main" {
-  bucket = aws_s3_bucket.main.id
+  count = var.bucket_domain_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
