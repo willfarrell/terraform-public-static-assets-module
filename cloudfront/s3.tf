@@ -60,9 +60,10 @@ resource "aws_s3_bucket_public_access_block" "main" {
   restrict_public_buckets = true
 }
 
-/*data "aws_iam_policy_document" "s3" {
+data "aws_iam_policy_document" "s3" {
   count = var.bucket_domain_name == "" ? 1 : 0
   statement {
+    sid = "FindBucket"
     actions = [
       "s3:ListBucket",
     ]
@@ -81,6 +82,7 @@ resource "aws_s3_bucket_public_access_block" "main" {
   }
 
   statement {
+    sid = "GetAssets"
     actions = [
       "s3:GetObject",
     ]
@@ -97,38 +99,11 @@ resource "aws_s3_bucket_public_access_block" "main" {
       ]
     }
   }
-}*/
+}
 
 resource "aws_s3_bucket_policy" "main" {
   count = var.bucket_domain_name == "" ? 1 : 0
   bucket = aws_s3_bucket.main[0].id
-  policy = <<POLICY
-{
-    "Version": "2012-10-17",
-    "Id": "${aws_s3_bucket.main[0].id}-policy",
-    "Statement": [
-    {
-      "Action": "s3:ListBucket",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "${aws_cloudfront_origin_access_identity.main.iam_arn}"
-      },
-      "Resource": [
-        "${aws_s3_bucket.main[0].arn}"
-      ],
-      "Sid": ""
-    },
-    {
-      "Action": "s3:GetObject",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "${aws_cloudfront_origin_access_identity.main.iam_arn}"
-      },
-      "Resource": "${aws_s3_bucket.main[0].arn}/*",
-      "Sid": ""
-    }
-  ]
-}
-POLICY
+  policy = data.aws_iam_policy_document.s3[0].json
 }
 

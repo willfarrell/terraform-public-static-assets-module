@@ -31,10 +31,21 @@ variable "web_acl_id" {
   description = "WAF ACL ID"
 }
 
+variable "geo_restriction" {
+  type = string
+  default = "none"
+}
+
 variable "cors_origins" {
   type    = list(string)
   default = [
     "*"]
+  description = "S3 CORS"
+}
+
+variable "response_headers_policy_id" {
+  type  = string
+  default = ""
 }
 
 variable "origin_path" {
@@ -95,12 +106,3 @@ variable "logging_bucket" {
 variable "bucket_domain_name" {
   default = ""
 }
-
-variable "dead_letter_arn" {
-  type = string
-}
-
-variable "dead_letter_policy_arn" {
-  type = string
-}
-
