@@ -5,7 +5,7 @@ resource "aws_cloudfront_origin_access_identity" "main" {
 resource "aws_cloudfront_distribution" "main" {
   enabled         = true
   is_ipv6_enabled = true
-  http_version    = "http2"
+  http_version    = "http2and3"
   web_acl_id      = var.web_acl_id
   price_class     = var.price_class
 
