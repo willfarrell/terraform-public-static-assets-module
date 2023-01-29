@@ -1,5 +1,5 @@
 resource "aws_cloudfront_origin_access_identity" "main" {
-  comment = "${var.aliases[0]} S3 static assets origin access policy"
+  comment = "${var.aliases[0]}"
 }
 
 resource "aws_cloudfront_distribution" "main" {
@@ -32,88 +32,6 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }*/
 
-  origin {
-    domain_name = local.bucket_domain_name
-    origin_id   = "www"
-    origin_path = var.origin_path
-
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
-    }
-  }
-
-  /*origin {
-    domain_name = local.bucket_domain_name
-    origin_id   = "fallback"
-    origin_path = var.fallback_path
-
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
-    }
-  }*/
-
-  default_cache_behavior {
-    target_origin_id = "www"
-
-    allowed_methods = [
-      "GET",
-      "HEAD",
-      "OPTIONS",
-    ]
-
-    cached_methods = [
-      "GET",
-      "HEAD",
-      "OPTIONS",
-    ]
-
-    viewer_protocol_policy = "redirect-to-https"
-    response_headers_policy_id = var.response_headers_policy_id
-
-    compress               = var.compress
-    min_ttl                = 0
-    default_ttl            = 86400
-    max_ttl                = 31536000
-
-    forwarded_values {
-      query_string = false
-
-      cookies {
-        forward = "none"
-      }
-
-      headers = var.forward_headers
-    }
-
-    dynamic "lambda_function_association" {
-      for_each = can(var.lambda["viewer-request"]) ? [1] : []
-      content {
-        event_type = "viewer-request"
-        lambda_arn = var.lambda["viewer-request"]
-      }
-    }
-    dynamic "lambda_function_association" {
-      for_each = can(var.lambda["origin-request"]) ? [1] : []
-      content {
-        event_type = "origin-request"
-        lambda_arn = var.lambda["origin-request"]
-      }
-    }
-    dynamic "lambda_function_association" {
-      for_each = can(var.lambda["origin-response"]) ? [1] : []
-      content {
-        event_type = "origin-response"
-        lambda_arn = var.lambda["origin-response"]
-      }
-    }
-    dynamic "lambda_function_association" {
-      for_each = can(var.lambda["viewer-response"]) ? [1] : []
-      content {
-        event_type = "viewer-response"
-        lambda_arn = var.lambda["viewer-response"]
-      }
-    }
-  }
 
   dynamic "origin" {
     for_each = var.origins
@@ -123,13 +41,13 @@ resource "aws_cloudfront_distribution" "main" {
       origin_path = origin.value.origin_path
 
       dynamic "s3_origin_config" {
-        for_each = try(origin.value.type, "custom") == "s3" ? [1] : []
+        for_each = origin.value.type == "s3" ? [1] : []
         content {
           origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
         }
       }
       dynamic "custom_origin_config" {
-        for_each = try(origin.value.type, "custom") == "custom" ? [1] : []
+        for_each = origin.value.type == "custom" ? [1] : []
         content {
           http_port              = 80
           https_port             = 443
@@ -140,68 +58,129 @@ resource "aws_cloudfront_distribution" "main" {
           ]
         }
       }
+      dynamic "origin_shield" {
+        for_each = origin.value.origin_shield != "disabled" ? [1] : []
+        content {
+          enabled = true
+          origin_shield_region = origin.value.origin_shield
+        }
+      }
+    }
+  }
+  
+  dynamic "origin_group" {
+    for_each = var.origin_groups
+    content {
+      origin_id = origin_group.value.origin_id
+      failover_criteria {
+        status_codes = origin_group.value.status_codes
+      }
+      dynamic "member" {
+        for_each = origin_group.value.origin_ids
+        content {
+          origin_id = member.value
+        }
+      }
     }
   }
 
   dynamic "ordered_cache_behavior" {
-    for_each = var.origins
+    for_each = slice(var.behaviors, 0, length(var.behaviors)-1) # all except last item
     content {
       target_origin_id = ordered_cache_behavior.value.origin_id
       path_pattern     = ordered_cache_behavior.value.path_pattern
+      viewer_protocol_policy = "redirect-to-https"
 
       allowed_methods = try(ordered_cache_behavior.value.allowed_methods, [])
-      cached_methods = try(ordered_cache_behavior.value.cached_methods, [])
 
-      viewer_protocol_policy = "redirect-to-https"
-      response_headers_policy_id = try(ordered_cache_behavior.value.response_headers_policy_id, null)
       #trusted_signers = ordered_cache_behavior.value.trusted_signers  #  The AWS accounts, if any, that you want to allow to create signed URLs for private content.
 
-      compress    = can(ordered_cache_behavior.value.compress) ? ordered_cache_behavior.value.compress : false//try(ordered_cache_behavior.value.compress, false)
-      min_ttl     = try(ordered_cache_behavior.value.min_ttl, 0)
-      default_ttl = try(ordered_cache_behavior.value.default_ttl, 86400)
-      max_ttl     = try(ordered_cache_behavior.value.max_ttl, 31536000)
-      forwarded_values {
-        query_string = try(ordered_cache_behavior.value.query_string, false)
-        query_string_cache_keys = try(ordered_cache_behavior.value.query_string_cache_keys, [])
-
-        headers = try(ordered_cache_behavior.value.headers, [])
-
-        cookies {
-          forward = "none"
-        }
-      }
-
+      # Broken out on purpose to prevent state issues (re-creating edge@lambda when index changes)
       dynamic "lambda_function_association" {
-        for_each = can(ordered_cache_behavior.value.lambda["viewer-request"]) ? [1] : []
+        for_each = ordered_cache_behavior.value.lambda.viewer-request != null ? [1] : []
         content {
           event_type = "viewer-request"
-          lambda_arn = ordered_cache_behavior.value.lambda["viewer-request"]
+          lambda_arn = ordered_cache_behavior.value.lambda.viewer-request
         }
       }
       dynamic "lambda_function_association" {
-        for_each = can(ordered_cache_behavior.value.lambda["origin-request"]) ? [1] : []
+        for_each = ordered_cache_behavior.value.lambda.origin-request != null? [1] : []
         content {
           event_type = "origin-request"
-          lambda_arn = ordered_cache_behavior.value.lambda["origin-request"]
+          lambda_arn = ordered_cache_behavior.value.lambda.origin-request
         }
       }
       dynamic "lambda_function_association" {
-        for_each = can(ordered_cache_behavior.value.lambda["origin-response"]) ? [1] : []
+        for_each = ordered_cache_behavior.value.lambda.origin-response != null ? [1] : []
         content {
           event_type = "origin-response"
-          lambda_arn = ordered_cache_behavior.value.lambda["origin-response"]
+          lambda_arn = ordered_cache_behavior.value.lambda.origin-response
         }
       }
       dynamic "lambda_function_association" {
-        for_each = can(ordered_cache_behavior.value.lambda["viewer-response"]) ? [1] : []
+        for_each = ordered_cache_behavior.value.lambda.viewer-response != null ? [1] : []
         content {
           event_type = "viewer-response"
-          lambda_arn = ordered_cache_behavior.value.lambda["viewer-response"]
+          lambda_arn = ordered_cache_behavior.value.lambda.viewer-response
         }
       }
+      
+      response_headers_policy_id = ordered_cache_behavior.value.response_headers_policy_id
+      cached_methods = ordered_cache_behavior.value.cache.methods
+      cache_policy_id = aws_cloudfront_cache_policy.main[ordered_cache_behavior.key].id
+      #origin_request_policy_id
+      compress = ordered_cache_behavior.value.cache.compress
     }
   }
-
+  
+  dynamic "default_cache_behavior" {
+    for_each = slice(var.behaviors, length(var.behaviors)-1, length(var.behaviors)) # Last item
+    content {
+      target_origin_id = default_cache_behavior.value.origin_id
+      viewer_protocol_policy = "redirect-to-https"
+      
+      allowed_methods = try(default_cache_behavior.value.allowed_methods, [])
+      
+      #trusted_signers = ordered_cache_behavior.value.trusted_signers  #  The AWS accounts, if any, that you want to allow to create signed URLs for private content.
+      
+      # Broken out on purpose to prevent state issues (re-creating edge@lambda when index changes)
+      dynamic "lambda_function_association" {
+        for_each = default_cache_behavior.value.lambda.viewer-request != null ? [1] : []
+        content {
+          event_type = "viewer-request"
+          lambda_arn = default_cache_behavior.value.lambda.viewer-request
+        }
+      }
+      dynamic "lambda_function_association" {
+        for_each = default_cache_behavior.value.lambda.origin-request != null ? [1] : []
+        content {
+          event_type = "origin-request"
+          lambda_arn = default_cache_behavior.value.lambda.origin-request
+        }
+      }
+      dynamic "lambda_function_association" {
+        for_each = default_cache_behavior.value.lambda.origin-response != null ? [1] : []
+        content {
+          event_type = "origin-response"
+          lambda_arn = default_cache_behavior.value.lambda.origin-response
+        }
+      }
+      dynamic "lambda_function_association" {
+        for_each = default_cache_behavior.value.lambda.viewer-response != null ? [1] : []
+        content {
+          event_type = "viewer-response"
+          lambda_arn = default_cache_behavior.value.lambda.viewer-response
+        }
+      }
+      
+      response_headers_policy_id = default_cache_behavior.value.response_headers_policy_id
+      cached_methods = default_cache_behavior.value.cache.methods
+      cache_policy_id = aws_cloudfront_cache_policy.main[length(var.behaviors)-1].id
+      #origin_request_policy_id
+      compress = default_cache_behavior.value.cache.compress
+    }
+  }
+  
   restrictions {
     geo_restriction {
       restriction_type = var.geo_restriction
@@ -231,5 +210,44 @@ resource "aws_cloudfront_distribution" "main" {
     Name = "${local.name} CloudFront"
   }
   )
+}
+
+resource "aws_cloudfront_cache_policy" "main" {
+  count = length(var.behaviors)
+  name        = "${var.name}-${var.behaviors[count.index].origin_id}${replace(var.behaviors[count.index].path_pattern, "/[/*.]+/", "-")}"
+  min_ttl     = var.behaviors[count.index].cache.min_ttl
+  default_ttl = var.behaviors[count.index].cache.default_ttl
+  max_ttl     = var.behaviors[count.index].cache.max_ttl
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config {
+      cookie_behavior = length(var.behaviors[count.index].cache.cookies) == 0 ? "none" : "whitelist"
+      dynamic "cookies" {
+        for_each = length(var.behaviors[count.index].cache.cookies) == 0 ? [] : [1]
+        content {
+          items = var.behaviors[count.index].cache.cookies
+        }
+      }
+    }
+    headers_config {
+      header_behavior = length(var.behaviors[count.index].cache.headers) == 0 ? "none" : "whitelist"
+      dynamic "headers" {
+        for_each = length(var.behaviors[count.index].cache.headers) == 0 ? [] : [1]
+        content {
+          items = var.behaviors[count.index].cache.headers
+        }
+      }
+    }
+    query_strings_config {
+      query_string_behavior = length(var.behaviors[count.index].cache.query_strings) == 0 ? "none" : "whitelist"
+      dynamic "query_strings" {
+        for_each = length(var.behaviors[count.index].cache.query_strings) == 0 ? [] : [1]
+        content {
+          items = var.behaviors[count.index].cache.query_strings
+        }
+      }
+    }
+    enable_accept_encoding_brotli = var.behaviors[count.index].cache.compress
+    #enable_accept_encoding_gzip = var.behaviors[count.index].cache.compress # overrides br?
+  }
 }
 

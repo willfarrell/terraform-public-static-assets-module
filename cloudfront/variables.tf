@@ -36,29 +36,52 @@ variable "geo_restriction" {
   default = "none"
 }
 
-variable "cors_origins" {
-  type    = list(string)
-  default = [
-    "*"]
-  description = "S3 CORS"
-}
-
-variable "response_headers_policy_id" {
-  type  = string
-  default = ""
-}
-
-variable "origin_path" {
-  type = string
-  default = "/"
-}
-
 variable "origins" {
-  type = list(any)
+  type = list(object({
+    origin_id = string
+    type = optional(string, "custom")
+    domain_name = string
+    origin_path = optional(string)
+    origin_shield = optional(string, "disabled") # aws region
+  }))
   default = []
 }
 
-// brotoli is not supported, set to false if doing self compression
+variable "origin_groups" {
+  type = list(object({
+    origin_id = string
+    status_codes = list(number)
+    origin_ids = list(string)
+  }))
+  default = []
+}
+
+variable "behaviors" {
+  type = list(object({
+      path_pattern = optional(string, "/*")
+      origin_id = string
+      allowed_methods = optional(list(string), [])
+      lambda = object({
+        viewer-request = optional(string)
+        origin-request = optional(string)
+        origin-response = optional(string)
+        viewer-response = optional(string)
+      })
+      response_headers_policy_id = optional(string)
+      cache = object({
+        min_ttl = optional(number, 0)
+        default_ttl = optional(number, 86400)
+        max_ttl = optional(number, 31536000)
+        methods = optional(list(string), [])
+        cookies = optional(list(string), [])
+        headers = optional(list(string), []) # never forward Host
+        query_strings = optional(list(string), [])
+        compress = optional(bool, false)
+      })
+  }))
+  default = []
+}
+
 variable "compress" {
   type = bool
   default = true
@@ -69,13 +92,7 @@ variable "default_root_object" {
   default = "index.html"
 }
 
-# lambda@edge
-variable "lambda" {
-  type    = map(string)
-  default = {}
-}
-
-// Allowed: 400, 403, 404, 405, 414, 416, 500, 501, 502, 503, 504
+# Allowed: 400, 403, 404, 405, 414, 416, 500, 501, 502, 503, 504
 variable "error_codes" {
   type    = map(string)
   default = {}
@@ -102,7 +119,14 @@ variable "logging_bucket" {
   default = ""
 }
 
-// Override S3 bucket used
+# Override S3 bucket used
 variable "bucket_domain_name" {
   default = ""
+}
+
+variable "cors_origins" {
+  type    = list(string)
+  default = [
+    "*"]
+  description = "S3 CORS"
 }
