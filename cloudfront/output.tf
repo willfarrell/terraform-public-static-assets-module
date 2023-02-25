@@ -1,6 +1,3 @@
-output "bucket" {
-  value = var.bucket_domain_name == "" ? aws_s3_bucket.main[0].id : var.bucket_domain_name
-}
 
 output "id" {
   value = aws_cloudfront_distribution.main.id

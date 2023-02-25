@@ -43,6 +43,10 @@ variable "origins" {
     domain_name = string
     origin_path = optional(string)
     origin_shield = optional(string, "disabled") # aws region
+    custom_headers = optional(list(object({
+        name = string
+        value = string
+      })), [])
   }))
   default = []
 }
@@ -60,32 +64,22 @@ variable "behaviors" {
   type = list(object({
       path_pattern = optional(string, "/*")
       origin_id = string
-      allowed_methods = optional(list(string), [])
-      lambda = object({
+      allowed_methods = optional(list(string), ["HEAD", "OPTIONS", "GET"]) # or ["HEAD", "OPTIONS", "GET", "PUT", "POST", "PATCH", "DELETE"]
+      origin_request_policy_id = optional(string)
+      lambda = optional(object({
         viewer-request = optional(string)
         origin-request = optional(string)
         origin-response = optional(string)
         viewer-response = optional(string)
-      })
+      }), {})
       response_headers_policy_id = optional(string)
-      cache = object({
-        min_ttl = optional(number, 0)
-        default_ttl = optional(number, 86400)
-        max_ttl = optional(number, 31536000)
-        methods = optional(list(string), [])
-        cookies = optional(list(string), [])
-        headers = optional(list(string), []) # never forward Host
-        query_strings = optional(list(string), [])
-        compress = optional(bool, false)
-      })
+      cached_methods = optional(list(string), ["HEAD", "OPTIONS", "GET"])
+      cache_policy_id = optional(string)
+      compress = optional(bool, false)
   }))
   default = []
 }
 
-variable "compress" {
-  type = bool
-  default = true
-}
 
 variable "default_root_object" {
   type    = string
@@ -98,35 +92,19 @@ variable "error_codes" {
   default = {}
 }
 
-variable "forward_headers" {
-  type = list(string)
-  default = [
-    "Accept",
-    "Accept-Charset",
-    "Accept-Encoding",
-    "Accept-Language",
-    "Authorization",
-    "Cache-Control",
-    "Content-Encoding",
-    "Content-Language",
-    "Content-Length",
-    "Content-Type",
-  ]
-}
-
 variable "logging_bucket" {
   type    = string
   default = ""
 }
 
 # Override S3 bucket used
-variable "bucket_domain_name" {
-  default = ""
-}
-
-variable "cors_origins" {
-  type    = list(string)
-  default = [
-    "*"]
-  description = "S3 CORS"
-}
+# variable "bucket_domain_name" {
+#   default = ""
+# }
+# 
+# variable "cors_origins" {
+#   type    = list(string)
+#   default = [
+#     "*"]
+#   description = "S3 CORS"
+# }

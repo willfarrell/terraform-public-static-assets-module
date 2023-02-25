@@ -18,21 +18,6 @@ resource "aws_cloudfront_distribution" "main" {
     ssl_support_method             = "sni-only"
   }
 
-  /*origin_group {
-    origin_id = "group"
-    failover_criteria {
-      status_codes = [500]
-    }
-    member {
-      origin_id = "www"
-    }
-
-    member {
-      origin_id = "fallback"
-    }
-  }*/
-
-
   dynamic "origin" {
     for_each = var.origins
     content {
@@ -63,6 +48,14 @@ resource "aws_cloudfront_distribution" "main" {
         content {
           enabled = true
           origin_shield_region = origin.value.origin_shield
+        }
+      }
+      
+      dynamic "custom_header" {
+        for_each = origin.value.custom_headers
+        content {
+          name = custom_header.value.name
+          value = custom_header.value.value
         }
       }
     }
@@ -126,10 +119,10 @@ resource "aws_cloudfront_distribution" "main" {
       }
       
       response_headers_policy_id = ordered_cache_behavior.value.response_headers_policy_id
-      cached_methods = ordered_cache_behavior.value.cache.methods
-      cache_policy_id = aws_cloudfront_cache_policy.main[ordered_cache_behavior.key].id
-      #origin_request_policy_id
-      compress = ordered_cache_behavior.value.cache.compress
+      cached_methods = ordered_cache_behavior.value.cached_methods
+      cache_policy_id = ordered_cache_behavior.value.cache_policy_id
+      origin_request_policy_id = ordered_cache_behavior.value.origin_request_policy_id
+      #compress = ordered_cache_behavior.value.compress
     }
   }
   
@@ -173,11 +166,11 @@ resource "aws_cloudfront_distribution" "main" {
         }
       }
       
+      origin_request_policy_id = default_cache_behavior.value.origin_request_policy_id
       response_headers_policy_id = default_cache_behavior.value.response_headers_policy_id
-      cached_methods = default_cache_behavior.value.cache.methods
-      cache_policy_id = aws_cloudfront_cache_policy.main[length(var.behaviors)-1].id
-      #origin_request_policy_id
-      compress = default_cache_behavior.value.cache.compress
+      cached_methods = default_cache_behavior.value.cached_methods
+      cache_policy_id = default_cache_behavior.value.cache_policy_id
+      #compress = default_cache_behavior.value.compress
     }
   }
   
@@ -205,49 +198,11 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   tags = merge(
-  local.tags,
-  {
-    Name = "${local.name} CloudFront"
-  }
+    local.tags,
+    {
+      Name = "${local.name} CloudFront"
+    }
   )
 }
 
-resource "aws_cloudfront_cache_policy" "main" {
-  count = length(var.behaviors)
-  name        = "${var.name}-${var.behaviors[count.index].origin_id}${replace(var.behaviors[count.index].path_pattern, "/[/*.]+/", "-")}"
-  min_ttl     = var.behaviors[count.index].cache.min_ttl
-  default_ttl = var.behaviors[count.index].cache.default_ttl
-  max_ttl     = var.behaviors[count.index].cache.max_ttl
-  parameters_in_cache_key_and_forwarded_to_origin {
-    cookies_config {
-      cookie_behavior = length(var.behaviors[count.index].cache.cookies) == 0 ? "none" : "whitelist"
-      dynamic "cookies" {
-        for_each = length(var.behaviors[count.index].cache.cookies) == 0 ? [] : [1]
-        content {
-          items = var.behaviors[count.index].cache.cookies
-        }
-      }
-    }
-    headers_config {
-      header_behavior = length(var.behaviors[count.index].cache.headers) == 0 ? "none" : "whitelist"
-      dynamic "headers" {
-        for_each = length(var.behaviors[count.index].cache.headers) == 0 ? [] : [1]
-        content {
-          items = var.behaviors[count.index].cache.headers
-        }
-      }
-    }
-    query_strings_config {
-      query_string_behavior = length(var.behaviors[count.index].cache.query_strings) == 0 ? "none" : "whitelist"
-      dynamic "query_strings" {
-        for_each = length(var.behaviors[count.index].cache.query_strings) == 0 ? [] : [1]
-        content {
-          items = var.behaviors[count.index].cache.query_strings
-        }
-      }
-    }
-    enable_accept_encoding_brotli = var.behaviors[count.index].cache.compress
-    #enable_accept_encoding_gzip = var.behaviors[count.index].cache.compress # overrides br?
-  }
-}
 
