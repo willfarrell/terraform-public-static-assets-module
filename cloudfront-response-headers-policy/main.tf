@@ -70,9 +70,7 @@ resource "aws_cloudfront_response_headers_policy" "main" {
 
   custom_headers_config {
     items {
-      header   = "Server"
-      value    = "_" # Update to use new remove feature
-      override = true
+      header   = "Server" # remove
     }
     # Not allowed
     /*

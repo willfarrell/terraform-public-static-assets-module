@@ -33,7 +33,7 @@ resource "aws_cloudwatch_log_resource_policy" "route53-query-logging-policy" {
 
 resource "aws_cloudwatch_log_group" "main" {
   name              = "/aws/route53/${aws_route53_zone.main.name}"
-  retention_in_days = 30
+  retention_in_days = terraform.workspace == "production" ? 365 : 7
 }
 
 // CloudFront Alias

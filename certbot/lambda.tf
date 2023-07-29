@@ -29,7 +29,7 @@ resource "aws_lambda_function" "lambda" {
 # Need for all regions?
 resource "aws_cloudwatch_log_group" "lambda" {
   name              = "/aws/lambda/certbot"
-  retention_in_days = 30
+  retention_in_days = terraform.environment == "production" ? 365 : 7
 }
 
 resource "aws_iam_role" "lambda" {
