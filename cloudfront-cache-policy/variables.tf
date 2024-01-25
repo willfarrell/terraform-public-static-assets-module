@@ -28,6 +28,11 @@ variable "headers" {
   default = []
 }
 
+variable "query_string_behavior" {
+  type = string
+  description = "only set to all*"
+  default = ""
+}
 variable "query_strings" {
   type = list(string) # list(string) or bool
   default = []

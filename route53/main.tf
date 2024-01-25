@@ -2,7 +2,7 @@ resource "aws_route53_zone" "main" {
   name = var.domain
 }
 
-// CloudWatch
+# CloudWatch
 resource "aws_route53_query_log" "main" {
   depends_on = [aws_cloudwatch_log_resource_policy.route53-query-logging-policy]
 
@@ -36,7 +36,7 @@ resource "aws_cloudwatch_log_group" "main" {
   retention_in_days = terraform.workspace == "production" ? 365 : 7
 }
 
-// CloudFront Alias
+# CloudFront Alias
 resource "aws_route53_record" "A" {
   count = length(keys(var.cloudfront))
   zone_id = aws_route53_zone.main.zone_id
@@ -61,7 +61,7 @@ resource "aws_route53_record" "AAAA" {
   }
 }
 
-// Mail
+# Mail
 resource "aws_route53_record" "MX" {
   count = length(keys(var.mx))
   zone_id = aws_route53_zone.main.zone_id
@@ -89,7 +89,16 @@ resource "aws_route53_record" "NS" {
   records = values(var.ns)[count.index]
 }
 
-// Security
+# resource "aws_route53_record" "HTTPS" {
+#   count   = 1
+#   zone_id = aws_route53_zone.main.zone_id
+#   name    = var.domain
+#   type    = "HTTPS"
+#   ttl     = "300"
+#   records = "alpn=\"h3,h2\"" # ipv4hint=\"192.0.2.1\" ipv6hint=\"2001:db8::1\"
+# }
+
+# Security
 resource "aws_route53_record" "CAA" {
   count = local.is_root ? 1 : 0
   zone_id = aws_route53_zone.main.zone_id
@@ -111,7 +120,7 @@ resource "aws_route53_record" "TXT" {
   records = values(var.txt)[count.index]
 }
 
-// DNSSEC + DNSKEY + DS
+# DNSSEC + DNSKEY + DS
 resource "aws_route53_key_signing_key" "main" {
   count = local.is_root ? 1 : 0
   hosted_zone_id             = aws_route53_zone.main.id

@@ -24,7 +24,7 @@ resource "aws_cloudfront_cache_policy" "main" {
       }
     }
     query_strings_config {
-      query_string_behavior = length(var.query_strings) == 0 ? "none" : "whitelist"
+      query_string_behavior = var.query_string_behavior != "" ? var.query_string_behavior : length(var.query_strings) == 0 ? "none" : "whitelist"
       dynamic "query_strings" {
         for_each = length(var.query_strings) == 0 ? [] : [1]
         content {
@@ -33,7 +33,7 @@ resource "aws_cloudfront_cache_policy" "main" {
       }
     }
     enable_accept_encoding_brotli = var.compress
-    #enable_accept_encoding_gzip = var.compress # overrides br?
+    enable_accept_encoding_gzip = var.compress
   }
 }
 

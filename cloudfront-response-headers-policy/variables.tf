@@ -126,7 +126,7 @@ variable "report_to" {
 variable "custom_headers" {
   type        = list(object({
     header = string
-    value = string
+    value = optional(string, null)
     override = optional(bool, true)
   }))
   default     = []
