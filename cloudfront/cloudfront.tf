@@ -5,7 +5,7 @@ resource "aws_cloudfront_origin_access_identity" "main" {
 resource "aws_cloudfront_distribution" "main" {
   enabled         = true
   is_ipv6_enabled = true
-  http_version    = "http2and3"
+  http_version    = var.http_version
   web_acl_id      = var.web_acl_id
   price_class     = var.price_class
 
@@ -82,7 +82,7 @@ resource "aws_cloudfront_distribution" "main" {
     content {
       target_origin_id = ordered_cache_behavior.value.origin_id
       path_pattern     = ordered_cache_behavior.value.path_pattern
-      viewer_protocol_policy = "redirect-to-https"
+      viewer_protocol_policy = ordered_cache_behavior.value.viewer_protocol_policy
 
       allowed_methods = try(ordered_cache_behavior.value.allowed_methods, [])
 

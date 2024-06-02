@@ -10,6 +10,11 @@ variable "default_tags" {
   default = {}
 }
 
+variable "http_version" {
+  type = string
+  default = "http3" # http2and3
+}
+
 variable "price_class" {
   type = string
   default = "PriceClass_All" # PriceClass_All, PriceClass_200, PriceClass_100
@@ -65,6 +70,7 @@ variable "behaviors" {
       path_pattern = optional(string, "/*")
       origin_id = string
       allowed_methods = optional(list(string), ["HEAD", "OPTIONS", "GET"]) # or ["HEAD", "OPTIONS", "GET", "PUT", "POST", "PATCH", "DELETE"]
+      viewer_protocol_policy =  optional(string, "https-only") # Change to `redirect-to-https` for HTML endpoints
       origin_request_policy_id = optional(string)
       lambda = optional(object({
         viewer-request = optional(string)
