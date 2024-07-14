@@ -46,6 +46,7 @@ variable "origins" {
     origin_id = string
     type = optional(string, "custom")
     domain_name = string
+    origin_access_control_id = optional(string) # aws_cloudfront_origin_access_control._.id
     origin_path = optional(string)
     origin_shield = optional(string, "disabled") # aws region
     custom_headers = optional(list(object({

@@ -24,6 +24,7 @@ resource "aws_cloudfront_distribution" "main" {
       domain_name = origin.value.domain_name
       origin_id   = origin.value.origin_id
       origin_path = origin.value.origin_path
+      origin_access_control_id = origin.value.origin_access_control_id
 
       dynamic "s3_origin_config" {
         for_each = origin.value.type == "s3" ? [1] : []
@@ -40,6 +41,7 @@ resource "aws_cloudfront_distribution" "main" {
 
           origin_ssl_protocols = [
             "TLSv1.2",
+            #"TLSv1.3",
           ]
         }
       }
