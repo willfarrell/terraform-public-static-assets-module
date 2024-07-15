@@ -67,13 +67,14 @@ resource "aws_cloudfront_response_headers_policy" "main" {
       }
     }
   }
-
-  custom_headers_config {
+  remove_headers_config {
     items {
-      header   = "Server" # remove
+      header   = "Server"
     }
-    # Not allowed
+  }
+  custom_headers_config {
     /*
+    
     items {
       header   = "via"
       value    = "_"
