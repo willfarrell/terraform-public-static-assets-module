@@ -67,116 +67,141 @@ resource "aws_cloudfront_response_headers_policy" "main" {
       }
     }
   }
-  remove_headers_config {
-    items {
-      header   = "Server"
+  
+  # remove_headers_config {
+  #   items {
+  #     header   = "Server"
+  #   }
+  #   
+  #   dynamic "items" {
+  #     for_each = var.remove_headers
+  #     content {
+  #       header   = items.value.header
+  #     }
+  #   }
+  # }
+  # TODO make conditional
+  dynamic "remove_headers_config" {
+    for_each = length(var.remove_headers) > 0 ? [1] : []
+    content {
+      dynamic "items" {
+        for_each = var.remove_headers
+        content {
+          header   = items.value.header
+        }
+      }
     }
   }
-  custom_headers_config {
-    /*
-    
-    items {
-      header   = "via"
-      value    = "_"
-      override = true
-    }
-    items {
-      header   = "x-amz-cf-id"
-      value    = "_"
-      override = true
-    }
-    items {
-      header   = "x-amz-cf-pop"
-      value    = "_"
-      override = true
-    }
-    x-amzn-requestid
-    x-amzn-trace-id
-    
-    
-    */
-    /*items {
-      header   = "Timing-Allow-Origin"
-      value    = "https://${local.workspace["main_domain"]}"
-      override = true
-    }*/
-    
-    dynamic "items" {
-      for_each = contains(var.mimes, "text/html") ? [1] : []
-      content {
-        header = "NEL"
-        value = jsonencode({
-          "report_to" : var.nel.report_to,
-          "max_age" : var.nel.max_age,
-          "include_subdomains" : var.nel.include_subdomains
-        })
-        override = var.nel.override
+  
+  dynamic "custom_headers_config" {
+    for_each = contains(var.mimes, "text/html") || contains(var.mimes, "application/javascript") || length(var.custom_headers) > 0 ? [1] : []
+    content {
+      
+      /*
+      
+      items {
+        header   = "via"
+        value    = "_"
+        override = true
       }
-    }
-
-    # https://www.permissionspolicy.com/
-    # https://github.com/w3c/webappsec-permissions-policy/blob/main/features.md
-    dynamic "items" {
-      for_each = contains(var.mimes, "text/html") || contains(var.mimes, "application/javascript") ? [1] : []
-      content {
-        header = "Permissions-Policy"
-        value = var.permissions.policy
-        override = var.permissions.override
+      items {
+        header   = "x-amz-cf-id"
+        value    = "_"
+        override = true
       }
-    }
-    
-    dynamic "items" {
-      for_each = contains(var.mimes, "text/html") || contains(var.mimes, "application/javascript") ? [1] : []
-      content {
-        header = "Report-To"
-        value = join(",", [
-          jsonencode({
-            "group" : "default",
-            "max_age" : 31536000,
-            "endpoints" : [{ "url" : "https://${var.report_to.id}.report-uri.com/a/d/g" }],
-            "include_subdomains" : true
-          }),
-          jsonencode({ "group" : "csp", "max-age" : 10886400, "endpoints" : [{ "url" : "https://${var.report_to.id}.report-uri.com/r/d/csp/enforce" }] }),
-          #jsonencode({ "group": "hpkp", "max-age": 10886400, "endpoints": [ { "url": "https://${var.report_to.id}.report-uri.com/r/d/hpkp/enforce" } ] }), # Deprecated
-          #jsonencode({ "group": "ct", "max-age": 10886400, "endpoints": [ { "url": "https://${var.report_to.id}.report-uri.com/r/d/ct/enforce" } ] }), # Deprecated
-          jsonencode({ "group" : "staple", "max-age" : 10886400, "endpoints" : [{ "url" : "https://${var.report_to.id}.report-uri.com/r/d/staple/enforce" }] }),
-          jsonencode({ "group" : "xss", "max-age" : 10886400, "endpoints" : [{ "url" : "https://${var.report_to.id}.report-uri.com/r/d/xss/enforce" }] })
-        ])
-        override = var.report_to.override
+      items {
+        header   = "x-amz-cf-pop"
+        value    = "_"
+        override = true
       }
-    }
-    
-    dynamic "items" {
-      for_each = contains(var.mimes, "text/html") ? [1] : []
-      content {
-        header   = "Cross-Origin-Embedder-Policy"
-        value    = var.coep.policy
-        override = var.coep.override
+      x-amzn-requestid
+      x-amzn-trace-id
+      
+      
+      */
+      /*items {
+        header   = "Timing-Allow-Origin"
+        value    = "https://${local.workspace["main_domain"]}"
+        override = true
+      }*/
+      
+      dynamic "items" {
+        for_each = contains(var.mimes, "text/html") ? [1] : []
+        content {
+          header = "NEL"
+          value = jsonencode({
+            "report_to" : var.nel.report_to,
+            "max_age" : var.nel.max_age,
+            "include_subdomains" : var.nel.include_subdomains
+          })
+          override = var.nel.override
+        }
       }
-    }
-    dynamic "items" {
-      for_each = contains(var.mimes, "text/html") ? [1] : []
-      content {
-        header   = "Cross-Origin-Opener-Policy"
-        value    = var.coop.policy
-        override = var.coop.override
+  
+      # https://www.permissionspolicy.com/
+      # https://github.com/w3c/webappsec-permissions-policy/blob/main/features.md
+      dynamic "items" {
+        for_each = contains(var.mimes, "text/html") || contains(var.mimes, "application/javascript") ? [1] : []
+        content {
+          header = "Permissions-Policy"
+          value = var.permissions.policy
+          override = var.permissions.override
+        }
       }
-    }
-    dynamic "items" {
-      for_each = contains(var.mimes, "text/html") ? [1] : []
-      content {
-        header   = "Cross-Origin-Resource-Policy"
-        value    = var.corp.policy
-        override = var.corp.override
+      
+      dynamic "items" {
+        for_each = contains(var.mimes, "text/html") || contains(var.mimes, "application/javascript") ? [1] : []
+        content {
+          header = "Report-To"
+          value = join(",", [
+            jsonencode({
+              "group" : "default",
+              "max_age" : 31536000,
+              "endpoints" : [{ "url" : "https://${var.report_to.id}.report-uri.com/a/d/g" }],
+              "include_subdomains" : true
+            }),
+            jsonencode({ "group" : "csp", "max-age" : 10886400, "endpoints" : [{ "url" : "https://${var.report_to.id}.report-uri.com/r/d/csp/enforce" }] }),
+            #jsonencode({ "group": "hpkp", "max-age": 10886400, "endpoints": [ { "url": "https://${var.report_to.id}.report-uri.com/r/d/hpkp/enforce" } ] }), # Deprecated
+            #jsonencode({ "group": "ct", "max-age": 10886400, "endpoints": [ { "url": "https://${var.report_to.id}.report-uri.com/r/d/ct/enforce" } ] }), # Deprecated
+            jsonencode({ "group" : "staple", "max-age" : 10886400, "endpoints" : [{ "url" : "https://${var.report_to.id}.report-uri.com/r/d/staple/enforce" }] }),
+            jsonencode({ "group" : "xss", "max-age" : 10886400, "endpoints" : [{ "url" : "https://${var.report_to.id}.report-uri.com/r/d/xss/enforce" }] })
+          ])
+          override = var.report_to.override
+        }
       }
-    }
-    
-    dynamic "items" {
-      for_each = var.custom_headers
-      content {
-        header   = items.value.header
-        value    = items.value.value
-        override = items.value.override
+      
+      dynamic "items" {
+        for_each = contains(var.mimes, "text/html") ? [1] : []
+        content {
+          header   = "Cross-Origin-Embedder-Policy"
+          value    = var.coep.policy
+          override = var.coep.override
+        }
+      }
+      dynamic "items" {
+        for_each = contains(var.mimes, "text/html") ? [1] : []
+        content {
+          header   = "Cross-Origin-Opener-Policy"
+          value    = var.coop.policy
+          override = var.coop.override
+        }
+      }
+      dynamic "items" {
+        for_each = contains(var.mimes, "text/html") ? [1] : []
+        content {
+          header   = "Cross-Origin-Resource-Policy"
+          value    = var.corp.policy
+          override = var.corp.override
+        }
+      }
+      
+      dynamic "items" {
+        for_each = var.custom_headers
+        content {
+          header   = items.value.header
+          value    = items.value.value
+          override = items.value.override
+        }
       }
     }
   }

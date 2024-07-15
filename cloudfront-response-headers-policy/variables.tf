@@ -129,5 +129,16 @@ variable "custom_headers" {
     value = optional(string, null)
     override = optional(bool, true)
   }))
+  default     = [{
+    header   = "Server"
+    value    = "_"
+    override = true
+  }]
+}
+
+variable "remove_headers" {
+  type        = list(object({
+    header = string
+  }))
   default     = []
 }
