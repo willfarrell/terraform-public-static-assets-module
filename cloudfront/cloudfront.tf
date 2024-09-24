@@ -132,7 +132,7 @@ resource "aws_cloudfront_distribution" "main" {
     for_each = slice(var.behaviors, length(var.behaviors)-1, length(var.behaviors)) # Last item
     content {
       target_origin_id = default_cache_behavior.value.origin_id
-      viewer_protocol_policy = "redirect-to-https"
+      viewer_protocol_policy = ordered_cache_behavior.value.viewer_protocol_policy
       
       allowed_methods = try(default_cache_behavior.value.allowed_methods, [])
       
