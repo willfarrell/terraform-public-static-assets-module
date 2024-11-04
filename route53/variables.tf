@@ -14,6 +14,16 @@ variable "cloudfront" {
   default = {}
 }
 
+variable "https" {
+  type = map(list(string))
+  default = {
+    "" = [
+      "1 . alpn=\"h3\" no-default-alpn",
+      "2 . alpn=\"h2\""
+    ]
+  }
+}
+
 variable "mx" {
   type = map(list(string))
   default = {
@@ -21,7 +31,7 @@ variable "mx" {
   }
 }
 
-// https://simonandrews.ca/articles/how-to-set-up-spf-dkim-dmarc
+# https://simonandrews.ca/articles/how-to-set-up-spf-dkim-dmarc
 variable "txt" {
   description = "SPF and DMARC need to be included"
   type = map(list(string))

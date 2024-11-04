@@ -44,7 +44,7 @@ resource "aws_route53_record" "A" {
   type    = "A"
   alias {
     name = values(var.cloudfront)[count.index]
-    zone_id = "Z2FDTNDATAQYW2"  // cloudfront.net
+    zone_id = "Z2FDTNDATAQYW2"  # cloudfront.net
     evaluate_target_health = false
   }
 }
@@ -59,6 +59,16 @@ resource "aws_route53_record" "AAAA" {
     zone_id = "Z2FDTNDATAQYW2"  // cloudfront.net
     evaluate_target_health = false
   }
+}
+
+# HTTPS / SVCB
+resource "aws_route53_record" "HTTPS" {
+  count = length(keys(var.https))
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "${keys(var.https)[count.index] == "" ? "" : "${keys(var.https)[count.index]}."}${var.domain}"
+  type    = "HTTPS"
+  ttl     = "300"
+  records = values(var.https)[count.index]
 }
 
 # Mail
