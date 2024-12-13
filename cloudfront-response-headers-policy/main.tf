@@ -68,6 +68,11 @@ resource "aws_cloudfront_response_headers_policy" "main" {
     }
   }
   
+  server_timing_headers_config {
+    enabled       = var.server_timing.sample_rate != 0
+    sampling_rate = var.server_timing.sample_rate
+  }
+  
   # remove_headers_config {
   #   items {
   #     header   = "Server"

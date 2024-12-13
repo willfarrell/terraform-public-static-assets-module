@@ -123,6 +123,13 @@ variable "report_to" {
   default     = {}
 }
 
+variable "server_timing" {
+  type = object({
+    sampling_rate = optional(number, 0)
+  })
+  default = {}
+}
+
 variable "custom_headers" {
   type        = list(object({
     header = string
