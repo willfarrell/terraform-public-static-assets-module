@@ -73,6 +73,7 @@ variable "behaviors" {
       allowed_methods = optional(list(string), ["HEAD", "OPTIONS", "GET"]) # or ["HEAD", "OPTIONS", "GET", "PUT", "POST", "PATCH", "DELETE"]
       viewer_protocol_policy =  optional(string, "https-only") # Change to `redirect-to-https` for HTML endpoints
       origin_request_policy_id = optional(string)
+      trusted_key_groups = optional(list(string)) # List of key group IDs that CloudFront can use to validate signed URLs or signed cookies.
       lambda = optional(object({
         viewer-request = optional(string)
         origin-request = optional(string)
