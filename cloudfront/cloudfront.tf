@@ -52,7 +52,7 @@ resource "aws_cloudfront_distribution" "main" {
           origin_shield_region = origin.value.origin_shield
         }
       }
-      
+
       dynamic "custom_header" {
         for_each = origin.value.custom_headers
         content {
@@ -62,7 +62,7 @@ resource "aws_cloudfront_distribution" "main" {
       }
     }
   }
-  
+
   dynamic "origin_group" {
     for_each = var.origin_groups
     content {
@@ -88,7 +88,7 @@ resource "aws_cloudfront_distribution" "main" {
 
       allowed_methods = try(ordered_cache_behavior.value.allowed_methods, [])
 
-      #trusted_signers = ordered_cache_behavior.value.trusted_signers  #  The AWS accounts, if any, that you want to allow to create signed URLs for private content.
+      trusted_key_groups =  ordered_cache_behavior.value.trusted_key_groups
 
       # Broken out on purpose to prevent state issues (re-creating edge@lambda when index changes)
       dynamic "lambda_function_association" {
@@ -119,7 +119,7 @@ resource "aws_cloudfront_distribution" "main" {
           lambda_arn = ordered_cache_behavior.value.lambda.viewer-response
         }
       }
-      
+
       response_headers_policy_id = ordered_cache_behavior.value.response_headers_policy_id
       cached_methods = ordered_cache_behavior.value.cached_methods
       cache_policy_id = ordered_cache_behavior.value.cache_policy_id
@@ -127,17 +127,17 @@ resource "aws_cloudfront_distribution" "main" {
       #compress = ordered_cache_behavior.value.compress
     }
   }
-  
+
   dynamic "default_cache_behavior" {
     for_each = slice(var.behaviors, length(var.behaviors)-1, length(var.behaviors)) # Last item
     content {
       target_origin_id = default_cache_behavior.value.origin_id
       viewer_protocol_policy = default_cache_behavior.value.viewer_protocol_policy
-      
+
       allowed_methods = try(default_cache_behavior.value.allowed_methods, [])
-      
-      #trusted_signers = ordered_cache_behavior.value.trusted_signers  #  The AWS accounts, if any, that you want to allow to create signed URLs for private content.
-      
+
+      trusted_key_groups =  default_cache_behavior.value.trusted_key_groups
+
       # Broken out on purpose to prevent state issues (re-creating edge@lambda when index changes)
       dynamic "lambda_function_association" {
         for_each = default_cache_behavior.value.lambda.viewer-request != null ? [1] : []
@@ -167,7 +167,7 @@ resource "aws_cloudfront_distribution" "main" {
           lambda_arn = default_cache_behavior.value.lambda.viewer-response
         }
       }
-      
+
       origin_request_policy_id = default_cache_behavior.value.origin_request_policy_id
       response_headers_policy_id = default_cache_behavior.value.response_headers_policy_id
       cached_methods = default_cache_behavior.value.cached_methods
@@ -175,7 +175,7 @@ resource "aws_cloudfront_distribution" "main" {
       #compress = default_cache_behavior.value.compress
     }
   }
-  
+
   restrictions {
     geo_restriction {
       restriction_type = var.geo_restriction
