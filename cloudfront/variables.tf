@@ -102,7 +102,7 @@ variable "error_codes" {
 
 variable "logging_bucket" {
   type    = string
-  default = ""
+  default = null
 }
 
 # Override S3 bucket used

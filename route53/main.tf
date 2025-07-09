@@ -36,7 +36,7 @@ resource "aws_cloudwatch_log_group" "main" {
   retention_in_days = terraform.workspace == "production" ? 365 : 7
 }
 
-# CloudFront Alias
+# CloudFront Alias - TODO move to CloudFront module
 resource "aws_route53_record" "A" {
   count = length(keys(var.cloudfront))
   zone_id = aws_route53_zone.main.zone_id
@@ -99,14 +99,6 @@ resource "aws_route53_record" "NS" {
   records = values(var.ns)[count.index]
 }
 
-# resource "aws_route53_record" "HTTPS" {
-#   count   = 1
-#   zone_id = aws_route53_zone.main.zone_id
-#   name    = var.domain
-#   type    = "HTTPS"
-#   ttl     = "300"
-#   records = "alpn=\"h3,h2\"" # ipv4hint=\"192.0.2.1\" ipv6hint=\"2001:db8::1\"
-# }
 
 # Security
 resource "aws_route53_record" "CAA" {
@@ -117,7 +109,8 @@ resource "aws_route53_record" "CAA" {
   ttl     = "300"
   records = [
     "0 issue \"amazonaws.com\"",
-    "128 issue \"letsencrypt.org\""
+    "128 issue \"letsencrypt.org\"",
+    "0 iodef \"mailto:caa@${var.domain}.report-to.org\""
   ]
 }
 
