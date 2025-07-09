@@ -19,6 +19,14 @@ resource "aws_cloudfront_response_headers_policy" "main" {
 
   security_headers_config {
     
+    dynamic "content_security_policy" {
+      for_each = var.content_security_policy != null && contains(var.mimes, "text/html") ? [1] : []
+      content {
+        content_security_policy =  try("${var.content_security_policy.value};report-to=${var.content_security_policy.report_to};report-uri=${var.report_to.default}",null)
+        override = try(var.content_security_policy.override, false)
+      }
+    }
+    
     # Strict-Transport-Security: max-age=63072000; includeSubdomains; preload
     strict_transport_security {
       access_control_max_age_sec = var.strict_transport_security.access_control_max_age_sec
@@ -132,14 +140,15 @@ resource "aws_cloudfront_response_headers_policy" "main" {
     }*/
 
     
-    dynamic "items" {
-      for_each = var.content_security_policy != null && contains(var.mimes, "text/html") ? [1] : []
-      content {
-        header   = "Content-Security-Policy"
-        value    = try("${var.content_security_policy.value};report-to=${var.content_security_policy.report_to};report-uri=${var.report_to.default}",null)
-        override = try(var.content_security_policy.override, false)
-      }
-    }
+    # Can be set using custom_headers, but can be set another way
+    # dynamic "items" {
+    #   for_each = var.content_security_policy != null && contains(var.mimes, "text/html") ? [1] : []
+    #   content {
+    #     header   = "Content-Security-Policy"
+    #     value    = try("${var.content_security_policy.value};report-to=${var.content_security_policy.report_to};report-uri=${var.report_to.default}",null)
+    #     override = try(var.content_security_policy.override, false)
+    #   }
+    # }
     
     # dynamic "items" {
     #   for_each = var.content_security_policy_report_only != null && contains(var.mimes, "text/html") ? [1] : []
