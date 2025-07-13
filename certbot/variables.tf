@@ -1,5 +1,5 @@
 
-// ["www.example.com,example.com","api.example.com"]
+# ["www.example.com,example.com","api.example.com"]
 variable "domains" {
   type = list(string)
 }

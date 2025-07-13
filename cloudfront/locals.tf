@@ -1,18 +1,13 @@
-module "defaults" {
-  source = "git@github.com:willfarrell/terraform-defaults?ref=v0.1.0"
-  name   = var.name
-  tags   = var.default_tags
-}
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
 
 locals {
-  region     = module.defaults.region
-  tags       = module.defaults.tags
-  name       = module.defaults.name
-  account_id = module.defaults.account_id
+  region     = data.aws_region.current.region
+  tags       = {}
+  name       = var.name
+  account_id  = data.aws_caller_identity.current.account_id
   
   origins = concat(var.origins, var.origin_groups)
-
-  #bucket_domain_name = var.bucket_domain_name != "" ? var.bucket_domain_name : aws_s3_bucket.main[0].bucket_domain_name
 
   #sse_algorithm = "AES256"
 
