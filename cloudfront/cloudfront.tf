@@ -210,7 +210,7 @@ resource "aws_cloudfront_distribution" "main" {
   tags = merge(
     local.tags,
     {
-      Name = "${local.name} CloudFront"
+      Name = "${replace(local.name, "/[^\\p{L}\\p{Z}\\p{N}_:/=+\\@-]/", "_")} CloudFront"
     }
   )
 }
