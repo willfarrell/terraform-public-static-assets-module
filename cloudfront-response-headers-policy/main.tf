@@ -22,7 +22,7 @@ resource "aws_cloudfront_response_headers_policy" "main" {
     dynamic "content_security_policy" {
       for_each = var.content_security_policy != null && contains(var.mimes, "text/html") ? [1] : []
       content {
-        content_security_policy =  try("${var.content_security_policy.value};report-to ${var.content_security_policy.report_to};report-uri ${var.report_to.default}",null)
+        content_security_policy = try("${var.content_security_policy.value};report-to ${var.content_security_policy.report_to};report-uri ${var.report_to.default}", var.content_security_policy.value)
         override = try(var.content_security_policy.override, false)
       }
     }
